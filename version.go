@@ -70,7 +70,7 @@ type version struct {
 }
 
 
-//SemVer returns the semantic version of the software
+//semVer returns the semantic version of the software
 //Semantic version is universal and widely used way of software versioning.
 //It contains 3 components, in the format of MAJOR.MINOR.PATCH where:
 //1. MAJOR: When you do incompatible changes, means it may contains changes which
