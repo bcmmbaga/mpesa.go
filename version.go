@@ -36,34 +36,36 @@ const (
 	envDevStageIter = "STAGE_ITERATION"
 )
 
-type devStage int
+//type devStage int
 
 const (
-	Alpha devStage = iota +1
+	Alpha = iota +1
 	Beta
 	ReleaseCandidate
 	Release
 	PostReleaseFix
 )
 
-func (stage devStage) String() string{
+var devStageName = map[int]string{
+	Alpha: "Alpha",
+	Beta: "Beta",
+	ReleaseCandidate:"Release Candidate",
+	Release: "Release",
+	PostReleaseFix: "Post Release Fix",
 
-	stages := [...]string{
-		"Alpha",
-		"Beta",
-		"Release Candidate",
-		"Release",
-		"Post-release fix",
-	}
-
-	return stages[stage]
 }
+
+func stage(stage int)string  {
+	return devStageName[stage]
+}
+
+
 
 type version struct {
 	Major int
 	Minor int
 	Patch int
-	DevStage devStage
+	DevStage int
 	DevStageIter int
 }
 
@@ -128,7 +130,7 @@ func loadConfig() version {
 		Major:        loadVersionEnv(envMajorVer,defMajorVer),
 		Minor:        loadVersionEnv(envMinorVer,defMinorVer),
 		Patch:        loadVersionEnv(envPatchVer,defPatchVer),
-		DevStage:     devStage(loadVersionEnv(envDevStage,defDevStage)),
+		DevStage:     loadVersionEnv(envDevStage,defDevStage),
 		DevStageIter: loadVersionEnv(envDevStageIter,defDevStageIter),
 	}
 
