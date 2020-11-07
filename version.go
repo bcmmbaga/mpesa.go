@@ -23,23 +23,23 @@ import (
 )
 
 const (
-	defMajorVer = 2
-	defMinorVer = 5
-	defPatchVer = 8
-	defDevStage = 3
+	defMajorVer     = 2
+	defMinorVer     = 5
+	defPatchVer     = 8
+	defDevStage     = 3
 	defDevStageIter = 2
 
-	envMajorVer = "MAJOR_VERSION"
-	envMinorVer = "MINOR_VERSION"
-	envPatchVer = "PATCH_VERSION"
-	envDevStage = "DEV_STAGE"
+	envMajorVer     = "MAJOR_VERSION"
+	envMinorVer     = "MINOR_VERSION"
+	envPatchVer     = "PATCH_VERSION"
+	envDevStage     = "DEV_STAGE"
 	envDevStageIter = "STAGE_ITERATION"
 )
 
 //type devStage int
 
 const (
-	Alpha = iota +1
+	Alpha = iota + 1
 	Beta
 	ReleaseCandidate
 	Release
@@ -47,28 +47,24 @@ const (
 )
 
 var devStageName = map[int]string{
-	Alpha: "Alpha",
-	Beta: "Beta",
-	ReleaseCandidate:"Release Candidate",
-	Release: "Release",
-	PostReleaseFix: "Post Release Fix",
-
+	Alpha:            "Alpha",
+	Beta:             "Beta",
+	ReleaseCandidate: "Release Candidate",
+	Release:          "Release",
+	PostReleaseFix:   "Post Release Fix",
 }
 
-func stage(stage int)string  {
+func stage(stage int) string {
 	return devStageName[stage]
 }
 
-
-
 type version struct {
-	Major int
-	Minor int
-	Patch int
-	DevStage int
+	Major        int
+	Minor        int
+	Patch        int
+	DevStage     int
 	DevStageIter int
 }
-
 
 //semVer returns the semantic version of the software
 //Semantic version is universal and widely used way of software versioning.
@@ -96,20 +92,18 @@ func (v version) semVer() string {
 		qualifier = ""
 	}
 
-
 	//e.g 1.2.0 and 1.2.5
-	if qualifier == ""{
+	if qualifier == "" {
 
-		if v.DevStage==Release{
-			return fmt.Sprintf("%d.%d.0",v.Major, v.Minor)
+		if v.DevStage == Release {
+			return fmt.Sprintf("%d.%d.0", v.Major, v.Minor)
 		}
 
-		return fmt.Sprintf("%d.%d.%d",v.Major, v.Minor,v.Patch)
+		return fmt.Sprintf("%d.%d.%d", v.Major, v.Minor, v.Patch)
 	}
 
-
 	//e.g 1.4.8-a.2
-	return fmt.Sprintf("%d.%d.%d-%s.%d",v.Major, v.Minor,v.Patch,qualifier,v.DevStageIter)
+	return fmt.Sprintf("%d.%d.%d-%s.%d", v.Major, v.Minor, v.Patch, qualifier, v.DevStageIter)
 
 }
 
@@ -127,11 +121,11 @@ func loadVersionEnv(key string, fallback int) int {
 func loadConfig() version {
 
 	return version{
-		Major:        loadVersionEnv(envMajorVer,defMajorVer),
-		Minor:        loadVersionEnv(envMinorVer,defMinorVer),
-		Patch:        loadVersionEnv(envPatchVer,defPatchVer),
-		DevStage:     loadVersionEnv(envDevStage,defDevStage),
-		DevStageIter: loadVersionEnv(envDevStageIter,defDevStageIter),
+		Major:        loadVersionEnv(envMajorVer, defMajorVer),
+		Minor:        loadVersionEnv(envMinorVer, defMinorVer),
+		Patch:        loadVersionEnv(envPatchVer, defPatchVer),
+		DevStage:     loadVersionEnv(envDevStage, defDevStage),
+		DevStageIter: loadVersionEnv(envDevStageIter, defDevStageIter),
 	}
 
 }
