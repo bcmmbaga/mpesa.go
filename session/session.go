@@ -125,7 +125,7 @@ func (a Application) EncryptAPIKey()error {
 	keyStr := string(key)
 
 
-	se := base64.StdEncoding.EncodeToString([]byte(s))
+	se := base64.StdEncoding.EncodeToString([]byte(keyStr))
 	fmt.Println(se)                                        // YSBzdHJpbmc=
 
 	sd, e := base64.StdEncoding.DecodeString(se)
