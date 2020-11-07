@@ -18,14 +18,24 @@ package session
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/base64"
-	"fmt"
 	"github.com/mobilemoney/mpesa/pkg/errors"
 )
 
 var (
 
 	ErrDecodePubKey = errors.New("error occurred while decoding public key")
+
+	ErrFailEncKey = errors.New("failed to encrypt api key")
+
+	ErrNotRSAPubKey = errors.New("not rsa public key")
+
+	ErrFailToParsePKey = errors.New("failed to parse the generated key")
+
+	ErrFailToDecodeBase64Str = errors.New("fail to decode base64 encoded public key")
 )
 
 type Application struct {
@@ -84,7 +94,7 @@ type Session interface {
 	//2. Generate an instance of an RSA cipher and use Base64 as the input
 	//3. Encode the APIKey with RSA cipher and digest as Base64 string format
 	// Now step (3) provides encrypted api key
-	EncryptAPIKey()error
+	EncryptAPIKey() (string, error)
 }
 
 
@@ -111,27 +121,51 @@ func (a Application) GenerateSessionKey(ctx context.Context) {
 	panic("implement me")
 }
 
-func (a Application) EncryptAPIKey()error {
+func (a Application) EncryptAPIKey() (string, error) {
 
-
-	//Decode Pub Key
-	key,err := base64.StdEncoding.DecodeString(a.PublicKey)
+	//pk public key
+	pk,err := deriveRSAPubKey(a.PublicKey)
 
 	if err != nil {
-		return errors.Wrap(ErrDecodePubKey,err)
+		return "", err
 	}
 
-	//get string from bytes
-	keyStr := string(key)
+
+	//encode api key as Base64
+	ak := base64.StdEncoding.EncodeToString([]byte(a.APIKey))
 
 
-	se := base64.StdEncoding.EncodeToString([]byte(keyStr))
-	fmt.Println(se)                                        // YSBzdHJpbmc=
+	//encrypt api key
+	digest,err := rsa.EncryptPKCS1v15(rand.Reader, pk, []byte(ak))
 
-	sd, e := base64.StdEncoding.DecodeString(se)
-	if e != nil {
-		fmt.Println(e)
+	if err != nil {
+		return "", errors.Wrap(err,ErrFailEncKey)
 	}
-	fmt.Println(string(sd))
-	panic("implement me")
+
+	//transform encrypted key into base64
+	base64Str := base64.StdEncoding.EncodeToString(digest)
+
+
+	return base64Str,nil
+}
+
+func deriveRSAPubKey(base64Str string)(*rsa.PublicKey,error)  {
+	pkb, err := base64.StdEncoding.DecodeString(base64Str)
+
+	if err != nil {
+		return nil, errors.Wrap(err, ErrFailToDecodeBase64Str)
+	}
+
+	pk,err := x509.ParsePKIXPublicKey(pkb)
+
+	if err != nil {
+		return nil, errors.Wrap(err,ErrFailToParsePKey)
+	}
+
+	pkey, ok := pk.(*rsa.PublicKey)
+
+	if !ok{
+		return nil, ErrNotRSAPubKey
+	}
+	return pkey, nil
 }
