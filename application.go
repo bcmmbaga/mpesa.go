@@ -1,7 +1,13 @@
 package mpesa
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
 	"os"
 )
 
@@ -29,6 +35,7 @@ const (
 
 // Application ...
 type Application struct {
+	client *http.Client
 
 	// API enviroment for your application
 	Type APIEnviroment
@@ -59,10 +66,73 @@ func NewApplication(applicationKey string, applicationMarket Market, apiType API
 		applicationKey = key
 	}
 
-	return &Application{
+	app := &Application{
+		client:     &http.Client{},
 		Type:       apiType,
 		Key:        applicationKey,
 		SessionKey: "",
 		market:     applicationMarket,
-	}, nil
+	}
+
+	if _, err := app.getSessionKey(); err != nil {
+		return nil, err
+	}
+
+	return app, nil
+}
+
+// newRequest create new *http.Request with additional headers parameters required by MPESA API
+func (app *Application) newRequest(method, url string, payload interface{}) (*http.Request, error) {
+
+	var buf io.Reader
+
+	if payload != nil {
+		b, err := json.Marshal(&payload)
+		if err != nil {
+			return nil, err
+		}
+
+		buf = bytes.NewBuffer(b)
+	}
+
+	req, err := http.NewRequest(method, url, buf)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", app.SessionKey))
+	req.Header.Set("Origin", "*")
+
+	return req, nil
+}
+
+// send makes a request to the API, the response body will be unmarshaled into v
+func (app *Application) send(req *http.Request, v interface{}) error {
+
+	resp, err := app.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		data, err := ioutil.ReadAll(resp.Body)
+
+		if err == nil && len(data) > 0 {
+			json.Unmarshal(data, &v)
+		}
+
+		return errors.New("Handle this error")
+	}
+
+	if v != nil {
+
+		if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
+			return err
+		}
+
+	}
+
+	return nil
 }
